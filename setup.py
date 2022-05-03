@@ -1,3 +1,4 @@
+from setuptools import setup, find_packages
 from setuptools.command.build_py import build_py as _build_py
 from distutils.command.clean import clean as _clean
 
@@ -53,3 +54,10 @@ def build(setup_kwargs):
             "build_py": MyPythonSourceGenerator,
         }
     })
+
+setup_kwargs = {
+    "name": "example",
+    "packages": find_packages(),
+}
+build(setup_kwargs)
+setup(**setup_kwargs)

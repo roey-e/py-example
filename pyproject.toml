@@ -9,8 +9,7 @@ dependencies = []
 requires-python = ">=3.7"
 license = {text = ""}
 [tool.pdm]
-build = "build.py"
 
 [build-system]
-requires = ["pdm-pep517>=0.12.0"]
-build-backend = "pdm.pep517.api"
+requires = ["setuptools<61,>=42"]
+build-backend = "setuptools.build_meta"
