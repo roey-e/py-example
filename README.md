@@ -1,7 +1,26 @@
 # Example
 
+## Installing
 This PDM example installs the package using `build.py` in an editable manner, **not** generating `generated.py` in-project.
 
+`pdm/pep517/editable.py:78:88` in "pdm-pep517" repo:
+```python
+    def _build(self, wheel: zipfile.ZipFile) -> None:
+        if self.meta.build:
+            setup_py = self.ensure_setup_py()
+            build_args = [
+                sys.executable,
+                str(setup_py),
+                "build_ext",
+                "--inplace",
+            ]
+            try:
+                subprocess.check_call(build_args)
+```
+
+"build_ext" is called, "build_py" is not.
+
+## Building
 `pdm build` calls `build.py` which generates the python source file `generated.py`:
 ```
 roey@penguin:~/py-example$ pdm build -v
