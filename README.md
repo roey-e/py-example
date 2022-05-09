@@ -74,3 +74,47 @@ Built wheel at /home/roey/py-example/dist/example-0.1.0-cp37-cp37m-linux_aarch64
 ```
 
 **But** the final wheel doesn't include `generated.py`. In fact it includes `header.h` which is unwanted.
+
+Why?
+
+In `pdm/pep517/wheel.py:64:77`:
+```python
+    def build(self, build_dir: str, **kwargs: Any) -> str:
+        if not os.path.exists(build_dir):
+            os.makedirs(build_dir, exist_ok=True)
+
+        self._records.clear()
+        fd, temp_path = tempfile.mkstemp(suffix=".whl")
+        os.close(fd)
+
+        with zipfile.ZipFile(
+            temp_path, mode="w", compression=zipfile.ZIP_DEFLATED
+        ) as zip_file:
+            self._copy_module(zip_file)
+            self._build(zip_file)
+            self._write_metadata(zip_file)
+```
+The wheel is built by pdm-pep517 logic (_copy_module`) and not by setuptools by first copying python source files (implementing "build_py" logic) and then building using setuptool's "build" command (which calls "build_py" and "build_ext").
+After building using setuptools, only extensions are copied as can be seen in `pdm/pep517/wheel.py:182:200`:
+```python
+    def _build(self, wheel: zipfile.ZipFile) -> None:
+        if not self.meta.build:
+            return
+        setup_py = self.ensure_setup_py()
+        build_args = [
+            sys.executable,
+            str(setup_py),
+            "build",
+            "-b",
+            str(self.location / "build"),
+        ]
+        try:
+            subprocess.check_call(build_args)
+        except subprocess.CalledProcessError as e:
+            raise BuildError(f"Error occurs when running {build_args}:\n{e}")
+        build_dir = self.location / "build"
+        lib_dir = next(build_dir.glob("lib.*"), None)
+        if not lib_dir:
+            return
+```
+Notice the `glob` looking for a `lib.*` pattern (extensions).
